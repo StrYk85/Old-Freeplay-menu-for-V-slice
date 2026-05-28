@@ -28,8 +28,12 @@ import funkin.api.discord.DiscordClient;
 #end
 
 import funkin.util.SwipeUtil;
+import funkin.util.TouchUtil;
 import flixel.addons.transition.FlxTransitionableState;
+import flixel.util.FlxColor;
 import StringTools;
+import funkin.mobile.ui.FunkinBackButton;
+import funkin.mobile.ui.FunkinButton;
 
 class OLDfreeplay extends MusicBeatState {
 
@@ -74,6 +78,8 @@ class OLDfreeplay extends MusicBeatState {
 
     var currentRank:String;
 
+    var backButton:FunkinBackButton;
+
     override function create() {
         super.create();
 
@@ -100,6 +106,17 @@ class OLDfreeplay extends MusicBeatState {
 
         initUI();
         initList();
+
+        if (FlxG.onMobile)
+        {
+            backButton = new FunkinBackButton(0, FlxG.height * 0.9, FlxColor.WHITE, function() {
+                saveParams(false);
+                FlxG.switchState(() -> new MainMenuState());
+            });
+            backButton.x = FlxG.width - backButton.width - 20;
+            backButton.y = FlxG.height - backButton.height - 20;
+            add(backButton);
+        }
     }
 
     function initUI() {
@@ -140,7 +157,6 @@ class OLDfreeplay extends MusicBeatState {
         for (title in songGroup) songGroup.remove(title, true);
         songGroup.clear();
 
-        // programmatically adds the songs via LevelRegistry and SongRegistry
         for (levelId in LevelRegistry.instance.listSortedLevelIds()) {
             var level:Level = LevelRegistry.instance.fetchEntry(levelId);
             if (level == null) continue;
@@ -160,7 +176,7 @@ class OLDfreeplay extends MusicBeatState {
         for (song in songList) {
             var item = new OLDFreeplayMenuItem();
             if (song != null) {
-                // this is so stupid, but i have to do this so that it can show the icon of the opponent for the custom difficulties
+
                 FreeplayState.rememberedDifficulty = song.data.listDifficulties(null, ['default'], false, false)[0];
                 item.initData(song);
             }
@@ -270,11 +286,12 @@ class OLDfreeplay extends MusicBeatState {
         if (!canInteract) return;
         updateText();
 
-        var pressUP:Bool = controls.UI_UP_P || Math.round(FlxG.mouse.wheel) > 0 || SwipeUtil.flickUp;
-        var pressDOWN:Bool = controls.UI_DOWN_P || Math.round(FlxG.mouse.wheel) < 0 || SwipeUtil.flickdown;
-        var pressLEFT:Bool = controls.UI_LEFT_P || (FlxG.keys.pressed.CONTROL && FlxG.mouse.justPressedRight);
-        var pressRIGHT:Bool = controls.UI_RIGHT_P || (!FlxG.keys.pressed.CONTROL && FlxG.mouse.justPressedRight);
-        var pressACCEPT:Bool = controls.ACCEPT || FlxG.mouse.justPressed;
+        var pressUP:Bool = controls.UI_UP_P || Math.round(FlxG.mouse.wheel) > 0 || (FlxG.onMobile && SwipeUtil.swipeUp);
+        var pressDOWN:Bool = controls.UI_DOWN_P || Math.round(FlxG.mouse.wheel) < 0 || (FlxG.onMobile && SwipeUtil.swipeDown);
+
+        var pressLEFT:Bool = !FlxG.onMobile && (controls.UI_LEFT_P || (FlxG.keys.pressed.CONTROL && FlxG.mouse.justPressedRight));
+        var pressRIGHT:Bool = !FlxG.onMobile && (controls.UI_RIGHT_P || (!FlxG.keys.pressed.CONTROL && FlxG.mouse.justPressedRight));
+        var pressACCEPT:Bool = (!FlxG.onMobile && (controls.ACCEPT || FlxG.mouse.justPressed));
 
         if (pressUP) changeSel(-1);
         if (pressDOWN) changeSel(1);
@@ -282,15 +299,27 @@ class OLDfreeplay extends MusicBeatState {
         if (pressLEFT) changeDif(-1);
         if (pressRIGHT) changeDif(1);
 
-        if (controls.BACK_P) {
+        if (FlxG.onMobile && TouchUtil.justPressed && difficultyTxt != null && TouchUtil.overlapsComplex(difficultyTxt))
+            changeDif(1);
+
+        if (FlxG.onMobile && TouchUtil.justPressed && variationTxt != null && TouchUtil.overlapsComplex(variationTxt))
+        {
+            curCharSel = FlxMath.wrap(curCharSel + 1, 0, charArray.length - 1);
+            curVariation = charArray[curCharSel];
+            FreeplayLogic.lastCharacter = curVariation;
+            saveParams(false);
+            initList();
+            changeSel(0);
+        }
+
+        var backPressed:Bool = controls.BACK_P;
+
+        if (backPressed) {
             saveParams(false);
             FlxG.switchState(() -> new MainMenuState());
         }
 
-        if (controls.FREEPLAY_CHAR_SELECT) {
-            //canInteract = false;
-            //openSubState(new CharacterSelectSubstate());
-
+        if (!FlxG.onMobile && controls.FREEPLAY_CHAR_SELECT) {
             curCharSel = FlxMath.wrap(curCharSel + 1, 0, charArray.length - 1);
             curVariation = charArray[curCharSel];
             FreeplayLogic.lastCharacter = curVariation;
@@ -318,6 +347,73 @@ class OLDfreeplay extends MusicBeatState {
             }
             else 
                 playSong(false);
+        }
+
+        if (FlxG.onMobile && TouchUtil.justReleased && !SwipeUtil.justSwipedAny)
+        {
+            var touchX:Float = -1;
+            var touchY:Float = -1;
+            if (FlxG.touches.list.length > 0)
+            {
+                for (t in FlxG.touches.list)
+                {
+                    if (t.justReleased) { touchX = t.x; touchY = t.y; break; }
+                }
+            }
+
+            var onScorePanel:Bool = (scoreBG != null && touchX >= scoreBG.x && touchY <= scoreBG.y + scoreBG.height + 10);
+
+            var onDiffText:Bool = (difficultyTxt != null && TouchUtil.overlapsComplex(difficultyTxt))
+                || (variationTxt != null && TouchUtil.overlapsComplex(variationTxt));
+
+            if (touchY >= 0 && !onScorePanel && !onDiffText)
+            {
+
+                var songSpacing:Float = 120;
+                var songCentreY:Float = FlxG.height * 0.48;
+                var maxHitDist:Float = songSpacing * 0.5;
+                var nearest:Int = -1;
+                var nearestDist:Float = maxHitDist;
+
+                for (i in 0...songGroup.members.length)
+                {
+                    var thingy = i - curSel;
+                    var scaledY = FlxMath.remapToRange(thingy, 0, 1, 0, 1.3);
+                    var targetY:Float = (scaledY * songSpacing) + songCentreY;
+                    var dist:Float = Math.abs(targetY - touchY);
+                    if (dist < nearestDist)
+                    {
+                        nearestDist = dist;
+                        nearest = i;
+                    }
+                }
+
+                if (nearest >= 0)
+                {
+                    if (nearest != curSel)
+                        changeSel(nearest - curSel);
+                    else
+                    {
+                        canInteract = false;
+                        if (curSel == 0 && songGroup.members[curSel].freeplayData == null)
+                        {
+                            var allowedSongs = [];
+                            for (i in songGroup.members) {
+                                var song = i.freeplayData;
+                                if (song == null) continue;
+                                var charVars:Array<String> = song?.data.getVariationsByCharacterId(curChar) ?? Constants.DEFAULT_VARIATION_LIST;
+                                var difAvailable:Array<String> = song?.data.listDifficulties(null, charVars, false) ?? Constants.DEFAULT_DIFFICULTY_LIST_FULL;
+                                if (difAvailable.contains(curDifficulty)) allowedSongs.push(i);
+                            }
+                            curSel = songGroup.members.indexOf(allowedSongs[FlxG.random.int(0, allowedSongs.length - 1)]);
+                            changeDif(0);
+                            playSong(true);
+                        }
+                        else
+                            playSong(false);
+                    }
+                }
+            }
         }
     }
 
@@ -357,10 +453,6 @@ class OLDfreeplay extends MusicBeatState {
 
     function doTxt(x, y, size) {
         return new FlxText(x, y, 0, '').setFormat(Paths.font("vcr.ttf"), size, -1);
-        // var placeholder = new FlxBitmapText(x, y, '', FlxBitmapFont.fromAngelCode(Paths.font("vcr-bmp.png"), Paths.font("vcr-bmp.fnt")));
-        // placeholder.antialiasing = false;
-        // var scale = size / 16;
-        // placeholder.scale.set(scale, scale);
-        // return placeholder;
+
     }
 }
