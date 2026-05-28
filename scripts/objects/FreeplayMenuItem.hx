@@ -5,7 +5,7 @@ import funkin.play.components.HealthIcon;
 import funkin.ui.freeplay.FreeplaySongData;
 import funkin.data.character.CharacterDataParser;
 
-class OLDFreeplayMenuItem extends FlxTypedSpriteGroup {
+class FreeplayMenuItem extends FlxTypedSpriteGroup {
 
     public var txt:AtlasText;
     public var icon:HealthIcon;
