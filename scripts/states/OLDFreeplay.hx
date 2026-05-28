@@ -293,8 +293,8 @@ class OLDfreeplay extends MusicBeatState {
             pressTAB = controls.FREEPLAY_CHAR_SELECT;
         }
         else {
-            pressUP = SwipeUtil.flickUp;
-            pressDOWN = SwipeUtil.flickdown;
+            pressUP = SwipeUtil.swipeUp;
+            pressDOWN = SwipeUtil.swipeDown;
             pressRIGHT = difficultyTxt != null && TouchUtil.justPressed && TouchUtil.overlapsComplex(difficultyTxt);
             pressTAB = variationTxt != null && TouchUtil.justPressed && TouchUtil.overlapsComplex(variationTxt);
         }
