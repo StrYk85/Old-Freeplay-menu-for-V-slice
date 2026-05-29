@@ -43,8 +43,8 @@ class OLDfreeplay extends MusicBeatState {
     var curSel:Int = 0;
     var curCharSel:Int = 0;
 
-    var isMobile(never, set):Bool = false;
-    function get_isMobile(value:Bool):Bool {
+    var isMobile(get, never):Bool = false;
+    function get_isMobile():Bool {
         return FlxG.onMobile && !ControlsHandler.hasExternalInputDevice;
     }
 
@@ -72,8 +72,6 @@ class OLDfreeplay extends MusicBeatState {
     var scoreBG:FunkinSprite;
     var difficultyTxt:FlxText;
     var variationTxt:FlxText;
-
-    var backButton:FunkinBackButton;
 
     var stickerState = null;
 
@@ -136,12 +134,12 @@ class OLDfreeplay extends MusicBeatState {
         insert(members.indexOf(bg) + 1, songGroup);
 
         if (isMobile) {
-            backButton = new FunkinBackButton(0, FlxG.height * 0.9, -1, function() {
+            addBackButton(0, FlxG.height * 0.9, -1, () -> {
                 saveParams(false);
                 FlxG.switchState(() -> new MainMenuState());
             });
+            backButton.onConfirmStart.add(() -> canInteract = false);
             backButton.setPosition(FlxG.width - backButton.width - 20, FlxG.height - backButton.height - 20);
-            add(backButton);
         }
     }
 
