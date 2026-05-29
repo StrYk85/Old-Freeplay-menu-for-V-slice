@@ -31,6 +31,7 @@ import funkin.api.discord.DiscordClient;
 
 import funkin.util.SwipeUtil;
 import funkin.util.TouchUtil;
+import funkin.mobile.input.ControlsHandler;
 import funkin.mobile.ui.FunkinBackButton;
 import funkin.mobile.ui.FunkinButton;
 
@@ -41,6 +42,11 @@ class OLDfreeplay extends MusicBeatState {
     var canInteract:Bool = true;
     var curSel:Int = 0;
     var curCharSel:Int = 0;
+
+    var isMobile(never, set):Bool = false;
+    function get_isMobile(value:Bool):Bool {
+        return FlxG.onMobile && !ControlsHandler.hasExternalInputDevice;
+    }
 
     var curDifficulty:String = 'hard';
     var curVariation(never, set):String = 'bf';
@@ -129,7 +135,7 @@ class OLDfreeplay extends MusicBeatState {
 
         insert(members.indexOf(bg) + 1, songGroup);
 
-        if (FlxG.onMobile) {
+        if (isMobile) {
             backButton = new FunkinBackButton(0, FlxG.height * 0.9, -1, function() {
                 saveParams(false);
                 FlxG.switchState(() -> new MainMenuState());
@@ -277,25 +283,19 @@ class OLDfreeplay extends MusicBeatState {
         if (!canInteract) return;
         updateText();
 
-        var pressUP:Bool;
-        var pressDOWN:Bool;
-        var pressLEFT:Bool;
-        var pressRIGHT:Bool;
-        var pressACCEPT:Bool;
-        var pressTAB:Bool;
+        var pressUP:Bool = controls.UI_UP_P || Math.round(FlxG.mouse.wheel) > 0;
+        var pressDOWN:Bool = controls.UI_DOWN_P || Math.round(FlxG.mouse.wheel) < 0;
+        var pressLEFT:Bool = controls.UI_LEFT_P || (FlxG.keys.pressed.CONTROL && FlxG.mouse.justPressedRight);
+        var pressRIGHT:Bool = controls.UI_RIGHT_P || (!FlxG.keys.pressed.CONTROL && FlxG.mouse.justPressedRight);
+        var pressACCEPT:Bool = controls.ACCEPT_P || FlxG.mouse.justPressed;
+        var pressTAB:Bool = controls.FREEPLAY_CHAR_SELECT;
 
-        if (!FlxG.onMobile) {
-            pressUP = controls.UI_UP_P || Math.round(FlxG.mouse.wheel) > 0;
-            pressDOWN = controls.UI_DOWN_P || Math.round(FlxG.mouse.wheel) < 0;
-            pressLEFT = controls.UI_LEFT_P || (FlxG.keys.pressed.CONTROL && FlxG.mouse.justPressedRight);
-            pressRIGHT = controls.UI_RIGHT_P || (!FlxG.keys.pressed.CONTROL && FlxG.mouse.justPressedRight);
-            pressACCEPT = controls.ACCEPT || FlxG.mouse.justPressed;
-            pressTAB = controls.FREEPLAY_CHAR_SELECT;
-        }
-        else {
+        if (isMobile) {
             pressUP = SwipeUtil.swipeUp;
             pressDOWN = SwipeUtil.swipeDown;
+            pressLEFT = false;
             pressRIGHT = difficultyTxt != null && TouchUtil.justPressed && TouchUtil.overlapsComplex(difficultyTxt);
+            pressACCEPT = false;
             pressTAB = variationTxt != null && TouchUtil.justPressed && TouchUtil.overlapsComplex(variationTxt);
         }
 
@@ -304,6 +304,8 @@ class OLDfreeplay extends MusicBeatState {
 
         if (pressLEFT) changeDif(-1);
         if (pressRIGHT) changeDif(1);
+
+        if (pressACCEPT) selectSong();
 
         if (pressTAB) {
             var amount = FlxG.keys.pressed.CONTROL? -1 : 1;
@@ -315,14 +317,12 @@ class OLDfreeplay extends MusicBeatState {
             changeSel(0);
         }
 
-        if (controls.BACK_P) {
+        if (!isMobile && controls.BACK_P) {
             saveParams(false);
             FlxG.switchState(() -> new MainMenuState());
         }
 
-        if (pressACCEPT) selectSong();
-
-        if (FlxG.onMobile && TouchUtil.justReleased && !SwipeUtil.justSwipedAny) {
+        if (isMobile && TouchUtil.justReleased && !SwipeUtil.justSwipedAny) {
             var touchX:Float = -1;
             var touchY:Float = -1;
             if (FlxG.touches.list.length > 0) {
@@ -384,6 +384,7 @@ class OLDfreeplay extends MusicBeatState {
             if (songGroup.members[curSel] == null) {
                 canInteract = true;
                 curSel = 0;
+                FunkinSound.playOnce(Paths.sound('cancelMenu'));
                 return;
             }
 

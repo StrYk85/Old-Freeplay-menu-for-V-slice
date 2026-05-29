@@ -1,13 +1,13 @@
+import funkin.modding.module.Module;
 import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.mainmenu.MainMenuState;
-import funkin.modding.module.Module;
-import flixel.addons.transition.FlxTransitionableState;
 import funkin.ui.transition.stickers.StickerSubState;
 import funkin.play.PlayState;
 import funkin.play.ResultState;
 import flixel.util.FlxTimer;
-import flixel.tweens.FlxTween;
+
 class FreeplayLogic extends Module {
+    
     public function new() {
         super('FreeplayLogic', 0);
     }

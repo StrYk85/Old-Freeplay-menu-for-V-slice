@@ -1,8 +1,20 @@
 {
-    "title": "pre V-Slice Freeplay",
-    "description": "",
-    "author": "stryk",
+    "title": "Old Freeplay Menu for V-Slice",
+    "description": "Have you ever wanted to go back to the old Freeplay Menu before V-Slice was ever a thing? I don't know why would you ever want that.",
+    "homepage": "https://github.com/StrYk85/Old-Freeplay-menu-for-V-slice",
+    "id": "OLDFreeplay",
+    "contributors": [
+        {
+            "name": "StrYk",
+            "role": "Coder, Mod Owner, did the fanmade freeplay backgrounds for Gooey and Spooky Mix",
+            "url": "https://twitter.com/StrYk85"
+        },
+        {
+            "name": "Merry",
+            "role": "Coder, helped with the mobile support"
+        }
+    ],
     "api_version": "0.8.0",
     "mod_version": "1.0.0",
-    "license": "CC BY 4.0,MIT"
+    "license": "Apache-2.0"
 }

@@ -1,6 +1,5 @@
 import flixel.FlxSprite;
-import funkin.Paths;
-import funkin.Assets;
+import funkin.save.Save;
 
 class FreeplayBG extends FlxSprite {
     
@@ -8,16 +7,19 @@ class FreeplayBG extends FlxSprite {
 
     function setBG(curChar:String) {
         var oldBG = currentBG;
-        currentBG = Assets.exists(Paths.image('menuBGBlue-$curChar'))? 'menuBGBlue-$curChar' : 'menuBGBlue';
+        if (Save.instance.modOptions["CharacterBackgrounds"] && Assets.exists(Paths.image('menuBGBlue-$curChar'))) currentBG = 'menuBGBlue-$curChar';
+        else currentBG = 'menuBGBlue';
 
-        if (oldBG != currentBG) loadGraphic(Paths.image(currentBG));
+        if (oldBG != currentBG) {
+            loadGraphic(Paths.image(currentBG));
+            setGraphicSize(Std.int(FlxG.width));
+            updateHitbox();
+            screenCenter();
+        }
     }
 
     public function new(?char:String) {
         super();
         setBG(char);
-        setGraphicSize(Std.int(FlxG.width));
-        updateHitbox();
-        screenCenter();
     }
 }

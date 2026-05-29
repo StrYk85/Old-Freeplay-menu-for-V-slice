@@ -1,0 +1,5 @@
+Ok basically all you have to do is make a background image like the one in the main menu but blue or whatever color you like and name it "menuBGBlue-playerID".
+replace playerID with, well, your character's player id.
+the image should be in the "images" folder, otherwise it won't show.
+
+That's pretty much it.
